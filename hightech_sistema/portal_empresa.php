@@ -25,6 +25,12 @@
 
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="container">
+        <?php if (isset($_GET['erro']) && $_GET['erro'] === 'acesso_negado'): ?>
+            <div class="alert alert-warning" style="margin-top: 1.5rem;">
+                ⚠️ Acesso negado: Você precisa ter perfil de Administrador para acessar os painéis de gestão.
+            </div>
+        <?php endif; ?>
+
         <!-- SEÇÃO: QUEM SOMOS -->
         <section id="quem-somos">
             <div class="section-header">

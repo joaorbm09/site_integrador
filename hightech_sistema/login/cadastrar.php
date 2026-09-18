@@ -9,31 +9,39 @@ if (usuarioLogado()) {
 }
 
 $mensagem = '';
+$nome = '';
+$email = '';
+
+if (!$conexao) {
+    $mensagem = '<div class="alert alert-danger">⚠️ Sem conexão com o banco de dados PostgreSQL.</div>';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = trim($_POST['nome'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $senha = $_POST['senha'] ?? '';
     $confirmar_senha = $_POST['confirmar_senha'] ?? '';
 
-    if (!empty($nome) && !empty($email) && !empty($senha)) {
-        if ($senha !== $confirmar_senha) {
-            $mensagem = '<div class="alert alert-warning">As senhas digitadas não coincidem!</div>';
-        } else if (strlen($senha) < 6) {
-            $mensagem = '<div class="alert alert-warning">A senha deve conter no mínimo 6 caracteres.</div>';
-        } else if (buscarUsuarioPorEmail($conexao, $email)) {
-            $mensagem = '<div class="alert alert-danger">Este e-mail já está cadastrado no sistema.</div>';
-        } else {
-            if (cadastrarUsuario($conexao, $nome, $email, $senha, 'aluno')) {
-                // Insere também na tabela de alunos
-                cadastrarAluno($conexao, $nome, '', $email, 'HT-2026', date('Y-m-d'), true);
-                
-                $mensagem = '<div class="alert alert-success">Cadastro realizado com sucesso! Você já pode fazer login.</div>';
-            } else {
-                $mensagem = '<div class="alert alert-danger">Erro ao criar conta. Tente novamente.</div>';
-            }
-        }
-    } else {
+    if (empty($nome) || empty($email) || empty($senha)) {
         $mensagem = '<div class="alert alert-warning">Por favor, preencha todos os campos obrigatórios.</div>';
+    } else if (!$conexao) {
+        $mensagem = '<div class="alert alert-danger">Não foi possível processar o cadastro: banco de dados offline.</div>';
+    } else if ($senha !== $confirmar_senha) {
+        $mensagem = '<div class="alert alert-warning">As senhas digitadas não coincidem!</div>';
+    } else if (strlen($senha) < 6) {
+        $mensagem = '<div class="alert alert-warning">A senha deve conter no mínimo 6 caracteres.</div>';
+    } else if (buscarUsuarioPorEmail($conexao, $email)) {
+        $mensagem = '<div class="alert alert-danger">Este e-mail já está cadastrado no sistema.</div>';
+    } else {
+        if (cadastrarUsuario($conexao, $nome, $email, $senha, 'aluno')) {
+            // Insere também na tabela de alunos se não existir
+            cadastrarAluno($conexao, $nome, null, $email, 'HT-2026', date('Y-m-d'), true);
+            
+            header("Location: login.php?sucesso=cadastrado");
+            exit;
+        } else {
+            $mensagem = '<div class="alert alert-danger">Erro ao criar conta. Tente novamente.</div>';
+        }
     }
 }
 ?>
@@ -60,12 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form action="cadastrar.php" method="post">
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label for="nome">Nome Completo: *</label>
-                    <input type="text" name="nome" id="nome" required placeholder="Seu nome completo">
+                    <input type="text" name="nome" id="nome" required placeholder="Seu nome completo" value="<?php echo htmlspecialchars($nome); ?>">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label for="email">E-mail: *</label>
-                    <input type="email" name="email" id="email" required placeholder="seu@email.com">
+                    <input type="email" name="email" id="email" required placeholder="seu@email.com" value="<?php echo htmlspecialchars($email); ?>">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1rem;">

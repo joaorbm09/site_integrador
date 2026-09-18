@@ -11,11 +11,12 @@ require_once __DIR__ . '/../database/connect.php';
 function cadastrarUsuario($conexao, $nome, $email, $senha, $perfil = 'aluno') {
     if (!$conexao) return false;
     try {
+        $email_normalizado = strtolower(trim($email));
         $senha_hash = password_hash($senha, PASSWORD_BCRYPT);
         $sql = "INSERT INTO usuarios (nome, email, senha, perfil) VALUES (:nome, :email, :senha, :perfil)";
         $stmt = $conexao->prepare($sql);
         $stmt->bindParam(":nome", $nome);
-        $stmt->bindParam(":email", $email);
+        $stmt->bindParam(":email", $email_normalizado);
         $stmt->bindParam(":senha", $senha_hash);
         $stmt->bindParam(":perfil", $perfil);
         return $stmt->execute();
@@ -31,7 +32,7 @@ function cadastrarUsuario($conexao, $nome, $email, $senha, $perfil = 'aluno') {
 function autenticarUsuario($conexao, $email, $senha) {
     if (!$conexao) return false;
     try {
-        $stmt = $conexao->prepare("SELECT * FROM usuarios WHERE email = :email");
+        $stmt = $conexao->prepare("SELECT * FROM usuarios WHERE LOWER(email) = LOWER(:email)");
         $stmt->bindParam(":email", $email);
         $stmt->execute();
         $usuario = $stmt->fetch();
@@ -49,7 +50,7 @@ function autenticarUsuario($conexao, $email, $senha) {
 function buscarUsuarioPorEmail($conexao, $email) {
     if (!$conexao) return false;
     try {
-        $stmt = $conexao->prepare("SELECT * FROM usuarios WHERE email = :email");
+        $stmt = $conexao->prepare("SELECT * FROM usuarios WHERE LOWER(email) = LOWER(:email)");
         $stmt->bindParam(":email", $email);
         $stmt->execute();
         return $stmt->fetch();
@@ -168,10 +169,12 @@ function cadastrarAluno($conexao, $nome, $cpf, $email, $turma, $nasc, $ativo = t
         $sql = "INSERT INTO alunos (nome, cpf, email, turma, nascimento, ativo) VALUES (:nome, :cpf, :email, :turma, :nascimento, :ativo)";
         $stmt = $conexao->prepare($sql);
         $stmt->bindParam(":nome", $nome);
-        $stmt->bindParam(":cpf", $cpf);
+        $cpf_val = (!empty($cpf) && trim($cpf) !== '') ? trim($cpf) : null;
+        $stmt->bindValue(":cpf", $cpf_val, $cpf_val === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindParam(":email", $email);
         $stmt->bindParam(":turma", $turma);
-        $stmt->bindParam(":nascimento", $nasc);
+        $nasc_val = (!empty($nasc) && trim($nasc) !== '') ? trim($nasc) : null;
+        $stmt->bindValue(":nascimento", $nasc_val, $nasc_val === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(":ativo", ($ativo === 'true' || $ativo === true || $ativo === 1 || $ativo === '1'), PDO::PARAM_BOOL);
         return $stmt->execute();
     } catch (PDOException $e) {
@@ -186,10 +189,12 @@ function atualizarAluno($conexao, $id, $nome, $cpf, $email, $turma, $nasc, $ativ
         $sql = "UPDATE alunos SET nome = :nome, cpf = :cpf, email = :email, turma = :turma, nascimento = :nascimento, ativo = :ativo WHERE id = :id";
         $stmt = $conexao->prepare($sql);
         $stmt->bindParam(":nome", $nome);
-        $stmt->bindParam(":cpf", $cpf);
+        $cpf_val = (!empty($cpf) && trim($cpf) !== '') ? trim($cpf) : null;
+        $stmt->bindValue(":cpf", $cpf_val, $cpf_val === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindParam(":email", $email);
         $stmt->bindParam(":turma", $turma);
-        $stmt->bindParam(":nascimento", $nasc);
+        $nasc_val = (!empty($nasc) && trim($nasc) !== '') ? trim($nasc) : null;
+        $stmt->bindValue(":nascimento", $nasc_val, $nasc_val === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stmt->bindValue(":ativo", ($ativo === 'true' || $ativo === true || $ativo === 1 || $ativo === '1'), PDO::PARAM_BOOL);
         $stmt->bindParam(":id", $id, PDO::PARAM_INT);
         return $stmt->execute();

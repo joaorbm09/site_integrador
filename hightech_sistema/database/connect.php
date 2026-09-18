@@ -1,6 +1,6 @@
 <?php 
 $host = "192.168.10.52";
-$dbname = "escola";
+$dbname = "hightech_school";
 $user = "escola";
 $pass = "senha2";
 

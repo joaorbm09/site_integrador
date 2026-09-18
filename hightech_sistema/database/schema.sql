@@ -15,13 +15,17 @@ CREATE TABLE IF NOT EXISTS cursos (
 CREATE TABLE IF NOT EXISTS alunos (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
-    cpf VARCHAR(14) UNIQUE,
+    cpf VARCHAR(14),
     email VARCHAR(100) NOT NULL,
     turma VARCHAR(20),
     nascimento DATE,
     ativo BOOLEAN DEFAULT true,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE alunos ADD COLUMN IF NOT EXISTS cpf VARCHAR(14);
+ALTER TABLE alunos ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+CREATE UNIQUE INDEX IF NOT EXISTS alunos_cpf_unique ON alunos (cpf) WHERE cpf IS NOT NULL;
 
 -- 3. Tabela de Matrículas (Relacionamento N:N entre Alunos e Cursos)
 CREATE TABLE IF NOT EXISTS matriculas (
@@ -42,20 +46,32 @@ CREATE TABLE IF NOT EXISTS usuarios (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Dados Iniciais (Seeds) para Testes
+-- Dados Iniciais (Seeds) para Testes (Idempotentes)
 
-INSERT INTO cursos (nome, categoria, descricao, carga_horaria, ativo) VALUES
-('Desenvolvimento Web & PHP', 'Desenvolvimento', 'Aprenda a criar aplicações web dinâmicas, modernas e integradas com banco de dados PostgreSQL.', 80, true),
-('Gestão e Negócios Digitais', 'Gestão & Ágil', 'Capacitação voltada para a gestão estratégica de empresas, Scrum, Kanban e projetos de TI.', 60, true),
-('Transformação Digital para PMEs', 'Inovação & PMEs', 'Modernize os processos do seu negócio utilizando ferramentas de automação e análise de dados.', 40, true)
-ON CONFLICT DO NOTHING;
+INSERT INTO cursos (nome, categoria, descricao, carga_horaria, ativo)
+SELECT 'Desenvolvimento Web & PHP', 'Desenvolvimento', 'Aprenda a criar aplicações web dinâmicas, modernas e integradas com banco de dados PostgreSQL.', 80, true
+WHERE NOT EXISTS (SELECT 1 FROM cursos WHERE nome = 'Desenvolvimento Web & PHP');
 
-INSERT INTO alunos (nome, cpf, email, turma, nascimento, ativo) VALUES
-('João Victor', '111.222.333-44', 'joao@hightech.com', 'DEV-2026', '2005-04-12', true),
-('Maria Silva', '222.333.444-55', 'maria@hightech.com', 'GES-2026', '2003-08-25', true)
-ON CONFLICT DO NOTHING;
+INSERT INTO cursos (nome, categoria, descricao, carga_horaria, ativo)
+SELECT 'Gestão e Negócios Digitais', 'Gestão & Ágil', 'Capacitação voltada para a gestão estratégica de empresas, Scrum, Kanban e projetos de TI.', 60, true
+WHERE NOT EXISTS (SELECT 1 FROM cursos WHERE nome = 'Gestão e Negócios Digitais');
 
-INSERT INTO matriculas (id_aluno, id_curso, status) VALUES
-(1, 1, 'Ativa'),
-(2, 2, 'Ativa')
-ON CONFLICT DO NOTHING;
+INSERT INTO cursos (nome, categoria, descricao, carga_horaria, ativo)
+SELECT 'Transformação Digital para PMEs', 'Inovação & PMEs', 'Modernize os processos do seu negócio utilizando ferramentas de automação e análise de dados.', 40, true
+WHERE NOT EXISTS (SELECT 1 FROM cursos WHERE nome = 'Transformação Digital para PMEs');
+
+INSERT INTO alunos (nome, cpf, email, turma, nascimento, ativo)
+SELECT 'João Victor', '111.222.333-44', 'joao@hightech.com', 'DEV-2026', '2005-04-12', true
+WHERE NOT EXISTS (SELECT 1 FROM alunos WHERE email = 'joao@hightech.com');
+
+INSERT INTO alunos (nome, cpf, email, turma, nascimento, ativo)
+SELECT 'Maria Silva', '222.333.444-55', 'maria@hightech.com', 'GES-2026', '2003-08-25', true
+WHERE NOT EXISTS (SELECT 1 FROM alunos WHERE email = 'maria@hightech.com');
+
+INSERT INTO matriculas (id_aluno, id_curso, status)
+SELECT 1, 1, 'Ativa'
+WHERE NOT EXISTS (SELECT 1 FROM matriculas WHERE id_aluno = 1 AND id_curso = 1);
+
+INSERT INTO matriculas (id_aluno, id_curso, status)
+SELECT 2, 2, 'Ativa'
+WHERE NOT EXISTS (SELECT 1 FROM matriculas WHERE id_aluno = 2 AND id_curso = 2);
