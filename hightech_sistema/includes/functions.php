@@ -2,6 +2,64 @@
 require_once __DIR__ . '/../database/connect.php';
 
 /* ==========================================================================
+   FUNÇÕES DE AUTENTICAÇÃO E USUÁRIOS
+   ========================================================================== */
+
+/**
+ * Cadastra um novo usuário criptografando a senha com password_hash.
+ */
+function cadastrarUsuario($conexao, $nome, $email, $senha, $perfil = 'aluno') {
+    if (!$conexao) return false;
+    try {
+        $senha_hash = password_hash($senha, PASSWORD_BCRYPT);
+        $sql = "INSERT INTO usuarios (nome, email, senha, perfil) VALUES (:nome, :email, :senha, :perfil)";
+        $stmt = $conexao->prepare($sql);
+        $stmt->bindParam(":nome", $nome);
+        $stmt->bindParam(":email", $email);
+        $stmt->bindParam(":senha", $senha_hash);
+        $stmt->bindParam(":perfil", $perfil);
+        return $stmt->execute();
+    } catch (PDOException $e) {
+        error_log("Erro ao cadastrar usuário: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Autentica um usuário verificando a senha informada com o hash salvo no banco.
+ */
+function autenticarUsuario($conexao, $email, $senha) {
+    if (!$conexao) return false;
+    try {
+        $stmt = $conexao->prepare("SELECT * FROM usuarios WHERE email = :email");
+        $stmt->bindParam(":email", $email);
+        $stmt->execute();
+        $usuario = $stmt->fetch();
+
+        if ($usuario && password_verify($senha, $usuario['senha'])) {
+            return $usuario;
+        }
+        return false;
+    } catch (PDOException $e) {
+        error_log("Erro ao autenticar usuário: " . $e->getMessage());
+        return false;
+    }
+}
+
+function buscarUsuarioPorEmail($conexao, $email) {
+    if (!$conexao) return false;
+    try {
+        $stmt = $conexao->prepare("SELECT * FROM usuarios WHERE email = :email");
+        $stmt->bindParam(":email", $email);
+        $stmt->execute();
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        error_log("Erro ao buscar usuário: " . $e->getMessage());
+        return false;
+    }
+}
+
+/* ==========================================================================
    FUNÇÕES DO MÓDULO DE CURSOS
    ========================================================================== */
 

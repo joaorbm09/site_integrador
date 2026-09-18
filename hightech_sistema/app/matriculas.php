@@ -1,4 +1,7 @@
 <?php 
+require_once __DIR__ . '/../includes/auth.php';
+exigirAdmin();
+
 require_once __DIR__ . '/../includes/functions.php';
 
 $mensagem = '';
@@ -47,7 +50,7 @@ $matriculas = listarMatriculas($conexao);
     <?php include __DIR__ . '/../includes/header.php'; ?>
 
     <main class="container">
-        <h2>Gestão de Matrículas (Relacionamento N:N em PostgreSQL)</h2>
+        <h2>Gestão de Matrículas (Área Restrita - Admin)</h2>
         <p>Vincule Alunos aos Cursos da escola através da tabela intermediária de Matrículas.</p>
 
         <?php echo $mensagem; ?>

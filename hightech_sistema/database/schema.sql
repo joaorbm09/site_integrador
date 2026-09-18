@@ -32,6 +32,16 @@ CREATE TABLE IF NOT EXISTS matriculas (
     status VARCHAR(20) DEFAULT 'Ativa'
 );
 
+-- 4. Tabela de Usuários (Autenticação e Login)
+CREATE TABLE IF NOT EXISTS usuarios (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    perfil VARCHAR(20) DEFAULT 'aluno', -- 'aluno' ou 'admin'
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Dados Iniciais (Seeds) para Testes
 
 INSERT INTO cursos (nome, categoria, descricao, carga_horaria, ativo) VALUES

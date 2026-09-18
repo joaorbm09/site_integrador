@@ -1,7 +1,14 @@
 <?php 
+require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/functions.php';
 
+$usuario_logado = obterUsuarioLogado();
 $mensagem = '';
+
+if (isset($_GET['erro']) && $_GET['erro'] === 'acesso_negado') {
+    $mensagem = '<div class="alert alert-warning">Acesso negado: Você precisa ter perfil de Administrador para acessar os painéis de gestão.</div>';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inscrever'])) {
     $nome = $_POST['nome'] ?? '';
     $cpf = $_POST['cpf'] ?? '';
@@ -11,12 +18,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inscrever'])) {
     $nasc = $_POST['nasc'] ?? date('Y-m-d');
 
     if (!empty($nome) && !empty($email) && !empty($id_curso)) {
-        if (cadastrarAluno($conexao, $nome, $cpf, $email, $turma, $nasc, true)) {
-            $novo_id = $conexao->lastInsertId('alunos_id_seq');
-            matricularAluno($conexao, $novo_id, $id_curso, 'Ativa');
+        // Verifica se aluno já existe ou cadastra novo
+        $aluno_existente = buscarUsuarioPorEmail($conexao, $email);
+        
+        $id_aluno = null;
+        $stmt_check = $conexao->prepare("SELECT id FROM alunos WHERE email = :email");
+        $stmt_check->bindParam(":email", $email);
+        $stmt_check->execute();
+        $aluno_db = $stmt_check->fetch();
+
+        if ($aluno_db) {
+            $id_aluno = $aluno_db['id'];
+        } else {
+            if (cadastrarAluno($conexao, $nome, $cpf, $email, $turma, $nasc, true)) {
+                $id_aluno = $conexao->lastInsertId('alunos_id_seq');
+            }
+        }
+
+        if ($id_aluno && matricularAluno($conexao, $id_aluno, $id_curso, 'Ativa')) {
             $mensagem = '<div class="alert alert-success">Inscrição realizada com sucesso! Seja bem-vindo à HighTech School.</div>';
         } else {
-            $mensagem = '<div class="alert alert-danger">Erro ao realizar inscrição. Verifique se o CPF ou E-mail já estão cadastrados.</div>';
+            $mensagem = '<div class="alert alert-danger">Erro ao realizar inscrição no curso.</div>';
         }
     } else {
         $mensagem = '<div class="alert alert-warning">Por favor, preencha todos os campos obrigatórios.</div>';
@@ -90,12 +112,12 @@ $cursos = listarCursos($conexao);
             <h2>Faça sua Inscrição Online 🎓</h2>
             <p style="margin-bottom: 1.5rem;">Preencha seus dados abaixo para se cadastrar como aluno e se matricular em um dos nossos cursos.</p>
 
-            <form action="" method="post">
+            <form action="aplicacao.php" method="post">
                 <input type="hidden" name="inscrever" value="1">
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="nome">Nome Completo: *</label>
-                        <input type="text" name="nome" id="nome" required placeholder="Digite seu nome">
+                        <input type="text" name="nome" id="nome" required value="<?php echo htmlspecialchars($usuario_logado['nome'] ?? ''); ?>" placeholder="Digite seu nome">
                     </div>
 
                     <div class="form-group">
@@ -105,7 +127,7 @@ $cursos = listarCursos($conexao);
 
                     <div class="form-group">
                         <label for="email">E-mail: *</label>
-                        <input type="email" name="email" id="email" required placeholder="seu@email.com">
+                        <input type="email" name="email" id="email" required value="<?php echo htmlspecialchars($usuario_logado['email'] ?? ''); ?>" placeholder="seu@email.com">
                     </div>
 
                     <div class="form-group">

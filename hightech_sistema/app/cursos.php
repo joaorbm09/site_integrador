@@ -1,4 +1,7 @@
 <?php 
+require_once __DIR__ . '/../includes/auth.php';
+exigirAdmin();
+
 require_once __DIR__ . '/../includes/functions.php';
 
 $mensagem = '';
@@ -65,7 +68,7 @@ $cursos = listarCursos($conexao);
     <?php include __DIR__ . '/../includes/header.php'; ?>
 
     <main class="container">
-        <h2>Gestão de Cursos (PostgreSQL)</h2>
+        <h2>Gestão de Cursos (Área Restrita - Admin)</h2>
         <p>Gerencie o catálogo de cursos oferecidos pela HighTech School.</p>
 
         <?php echo $mensagem; ?>

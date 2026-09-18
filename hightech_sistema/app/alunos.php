@@ -1,4 +1,7 @@
 <?php 
+require_once __DIR__ . '/../includes/auth.php';
+exigirAdmin();
+
 require_once __DIR__ . '/../includes/functions.php';
 
 $mensagem = '';
@@ -66,7 +69,7 @@ $alunos = listarAlunos($conexao);
     <?php include __DIR__ . '/../includes/header.php'; ?>
 
     <main class="container">
-        <h2>Gestão de Alunos (PostgreSQL)</h2>
+        <h2>Gestão de Alunos (Área Restrita - Admin)</h2>
         <p>Gerencie o cadastro de estudantes do sistema.</p>
 
         <?php echo $mensagem; ?>
